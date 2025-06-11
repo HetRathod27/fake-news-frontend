@@ -26,7 +26,7 @@ function App() {
         throw new Error('Please fill in both title and content');
       }
 
-      const response = await fetch('http://localhost:5000/api/analyze', {
+     const response = await fetch('https://fake-news-backend-18lk.onrender.com/api/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -62,7 +62,7 @@ function App() {
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/history');
+      const response = await fetch('https://fake-news-backend-18lk.onrender.com/api/history');
       const data = await response.json();
       setHistory(data);
     } catch (error) {
@@ -72,7 +72,7 @@ function App() {
 
   const deleteHistoryItem = async (id: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/history/${id}`, {
+     const response = await fetch(`https://fake-news-backend-18lk.onrender.com/api/history/${id}`, {
         method: 'DELETE'
       });
       if (!response.ok) {
