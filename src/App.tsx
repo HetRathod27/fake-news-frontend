@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import './App.css'
 
+// API URL configuration - will work for both local and production
+const API_URL = 'http://localhost:5000';
+
 interface AnalysisResult {
   isFake: boolean;
   confidence: number;
@@ -26,10 +29,11 @@ function App() {
         throw new Error('Please fill in both title and content');
       }
 
-     const response = await fetch('https://fake-news-backend-18lk.onrender.com/api/analyze', {
+      const response = await fetch(`${API_URL}/api/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
         },
         body: JSON.stringify({ title, content }),
       });
@@ -62,27 +66,44 @@ function App() {
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch('https://fake-news-backend-18lk.onrender.com/api/history');
+      const response = await fetch(`${API_URL}/api/history`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch history');
+      }
+      
       const data = await response.json();
       setHistory(data);
     } catch (error) {
       console.error('Error fetching history:', error);
+      setError('Failed to load history. Please refresh the page.');
     }
   };
 
   const deleteHistoryItem = async (id: string) => {
     try {
-     const response = await fetch(`https://fake-news-backend-18lk.onrender.com/api/history/${id}`, {
-        method: 'DELETE'
+      const response = await fetch(`${API_URL}/api/history/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
       });
+
       if (!response.ok) {
         throw new Error('Failed to delete item');
       }
+
       // Remove the item from local state
       setHistory(history.filter(item => item._id !== id));
     } catch (error) {
       console.error('Error deleting history item:', error);
-      setError('Failed to delete history item');
+      setError('Failed to delete history item. Please try again.');
     }
   };
 
