@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 
-// API URL configuration - will work for both local and production
-const API_URL = 'http://localhost:5000';
+// API URL configuration
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+console.log('Current API URL:', API_URL); // For debugging
 
 interface AnalysisResult {
   isFake: boolean;
@@ -19,6 +20,11 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch history on component mount
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
   const analyzeContent = async () => {
     try {
       setLoading(true);
@@ -29,34 +35,36 @@ function App() {
         throw new Error('Please fill in both title and content');
       }
 
+      console.log('Sending request to:', `${API_URL}/api/analyze`);
+      
       const response = await fetch(`${API_URL}/api/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
+          'Accept': 'application/json'
         },
+        mode: 'cors',
         body: JSON.stringify({ title, content }),
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Server error. Please try again later.');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server error: ${response.status}`);
       }
 
       const data = await response.json();
-      
+      console.log('Received data:', data);
+
       if (!data || typeof data.isFake !== 'boolean') {
         throw new Error('Invalid response from server');
       }
 
-      if (data.features?.[0]?.startsWith('Error:')) {
-        throw new Error(data.explanation || 'Analysis failed. Please try again.');
-      }
-
       setResult(data);
-      fetchHistory();
+      await fetchHistory();
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Analysis error:', error);
       setError(error instanceof Error ? error.message : 'An unexpected error occurred');
       setResult(null);
     } finally {
@@ -66,11 +74,13 @@ function App() {
 
   const fetchHistory = async () => {
     try {
+      console.log('Fetching history from:', `${API_URL}/api/history`);
+      
       const response = await fetch(`${API_URL}/api/history`, {
         headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
+          'Accept': 'application/json'
+        },
+        mode: 'cors'
       });
       
       if (!response.ok) {
@@ -81,29 +91,29 @@ function App() {
       setHistory(data);
     } catch (error) {
       console.error('Error fetching history:', error);
-      setError('Failed to load history. Please refresh the page.');
     }
   };
 
   const deleteHistoryItem = async (id: string) => {
     try {
+      console.log('Deleting item:', id);
+      
       const response = await fetch(`${API_URL}/api/history/${id}`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
+          'Accept': 'application/json'
+        },
+        mode: 'cors'
       });
 
       if (!response.ok) {
         throw new Error('Failed to delete item');
       }
 
-      // Remove the item from local state
       setHistory(history.filter(item => item._id !== id));
     } catch (error) {
       console.error('Error deleting history item:', error);
-      setError('Failed to delete history item. Please try again.');
+      setError('Failed to delete history item');
     }
   };
 
